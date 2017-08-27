@@ -8,6 +8,14 @@ volatile unsigned char interruptAvailable;
 
 struct int_param_s params = {.pin=2, .cb=interrupt};
 
+short gyro[3];
+short accel[3];
+long quat[4];
+unsigned long timestamp;
+unsigned short sensors;
+unsigned char more;
+
+
 void interrupt()
 {
   interruptAvailable = 1;
@@ -57,6 +65,7 @@ void loop() {
   if(interruptAvailable)
   {
     interruptAvailable = 0;
-
+    
+    dmp_read_fifo(gyro,accel,quat,&timestamp,&sensors,&more);
   }
 }
