@@ -39,6 +39,24 @@ void mpu_calculate_biases()
     mpu_set_gyro_bias_reg(gyrocal);
 }
 
+void quat_to_euler(float* quat_float, float* euler){
+  double sinr = +2.0 * (quat_float[0] * quat_float[1] + quat_float[2] * quat_float[3]);
+  double cosr = +1.0 - 2.0 * (quat_float[1] * quat_float[1] + quat_float[2] * quat_float[2]);
+  euler[0] = atan2(sinr, cosr);
+
+  // pitch (y-axis rotation)
+  double sinp = +2.0 * (quat_float[0] * quat_float[2] - quat_float[3] * quat_float[1]);
+        if (fabs(sinp) >= 1)
+            euler[1] = copysign(M_PI / 2, sinp); // use 90 degrees if out of range
+        else
+        euler[1] = asin(sinp);
+
+  // yaw (z-axis rotation)
+  double siny = +2.0 * (quat_float[0] * quat_float[3] + quat_float[1] * quat_float[2]);
+  double cosy = +1.0 - 2.0 * (quat_float[2] * quat_float[2] + quat_float[3] * quat_float[3]);  
+  euler[2] = atan2(siny, cosy);
+}
+
 void setup() {
   Wire.begin();
   Wire.setClock(400000);
@@ -67,5 +85,20 @@ void loop() {
     interruptAvailable = 0;
     
     dmp_read_fifo(gyro,accel,quat,&timestamp,&sensors,&more);
+
+    float quat_float[4];
+    float euler[3];
+    quat_float[0] = quat[0]/1073741824.0;
+    quat_float[1] = quat[1]/1073741824.0;
+    quat_float[2] = quat[2]/1073741824.0;
+    quat_float[3] = quat[3]/1073741824.0;
+
+    quat_to_euler(quat_float, euler);
+
+
+
+    Serial.println(euler[0]*180/M_PI);
+    Serial.println(euler[1]*180/M_PI);
+    Serial.println(euler[2]*180/M_PI);
   }
 }
